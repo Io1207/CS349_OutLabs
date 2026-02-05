@@ -25,6 +25,11 @@
     <button>Add</button>
     </form>
 
+    <!-- add optional error message -->
+    <% if (err_message) { %>
+        <p style="color: red;"><%= err_message %></p>
+    <% } %>
+
     <!-- TODO: List Enrolled Students -->
     <!-- Show: Student ID, Name -->
     <!-- Action: Remove Button -->

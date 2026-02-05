@@ -113,7 +113,33 @@ app.get('/logout', (req, res) => {
 // 2. Fetch all available courses (exclude registered ones)
 // 3. Calculate total credits
 app.get('/student/dashboard', isAuthenticated, async (req, res) => {
+
     const sID = req.session.user.user_id;
+
+    clashCheck = await getPool().query(`
+        SELECT c.slot, COUNT(*) as slot_count
+        FROM Registrations r
+        JOIN Courses c ON r.course_id = c.course_id
+        WHERE r.student_id = $1
+        GROUP BY c.slot
+        HAVING COUNT(*) > 1
+    `, [sID]);
+    
+    if (clashCheck.rows.length > 0) {
+        req.session.error = "Slot clash detected in your registered courses.";
+    }
+
+    creditLimitCheck = await getPool().query(`
+        SELECT COALESCE(SUM(c.credits), 0) AS total_credits
+        FROM Registrations r
+        JOIN Courses c ON r.course_id = c.course_id
+        WHERE r.student_id = $1
+    `, [sID]);
+    
+    if (creditLimitCheck.rows[0].total_credits > 24) {
+        req.session.error = "Credit limit exceeded in your registered courses.";
+    }
+
     const success = req.session.success || null;
     req.session.success = null; // Clear success message after displaying
     const error = req.session.error || null;
@@ -185,7 +211,7 @@ app.post('/student/register', isAuthenticated, async (req, res) => {
         `, [sID, course_id]);
 
         if (clash.rows.length) {
-            req.session.error = "Slot clash detected";
+            req.session.error = "Slot clash detected! Cannot register for this course.";
             return res.redirect('/student/dashboard');
         }
 
@@ -207,7 +233,7 @@ app.post('/student/register', isAuthenticated, async (req, res) => {
         if (credits.rows[0].total > 24) {
             // console.log("Credit limit being exceeded: rows sum, rows total: ", credits.rows[0].total, courseCredits.rows[0].credits);
             // console.log(credits.rows[0].total+ courseCredits.rows[0].credits);
-            req.session.error = "Credit limit exceeded";
+            req.session.error = "Credit limit exceeded! Cannot register for this course.";
             return res.redirect('/student/dashboard');
         }
 
@@ -257,7 +283,8 @@ app.get('/instructor/dashboard', isAuthenticated, isInstructor, async (req, res)
 // 2. Fetch enrolled students
 app.get('/instructor/course/:id', isAuthenticated, isInstructor, async (req, res) => {
     const courseId = req.params.id;
-
+    const error = req.session.error || null;
+    req.session.error = null; // Clear error message after displaying
     const students = await getPool().query(`
         SELECT *
         FROM Registrations r
@@ -268,7 +295,7 @@ app.get('/instructor/course/:id', isAuthenticated, isInstructor, async (req, res
     res.render('instructor_course', {
         courseId,
         students: students.rows,
-        message: null
+        err_message: error
     });
 });
 
@@ -287,7 +314,8 @@ app.post('/instructor/add-student', isAuthenticated, isInstructor, async (req, r
     );
 
     if (!student.rows.length) {
-        return res.send("Student not found");
+        req.session.error = "Student not found";
+        return res.redirect(`/instructor/course/${course_id}`);
     }
 
     await getPool().query(

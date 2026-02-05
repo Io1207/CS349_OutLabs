@@ -27,6 +27,9 @@
     <% if (err_message) { %>
         <p style="color: red; font-size: 22px;"><%= err_message %></p>
     <% } %>
+
+    <h3>Total Credits: <%= totalCredits %>/24</h3>
+
     <table style="border: 1px solid black; ">
     <tr style="background-color: #f2f2f2;"><th>Course ID</th><th>Name</th><th>Credits</th><th>Slot</th><th>Instructor</th><th>Capacity</th><th>Action</th></tr>
     <% registeredCourses.forEach(c => { %>
