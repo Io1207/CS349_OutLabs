@@ -9,11 +9,16 @@
 <link rel="stylesheet" href="/style.css">
 
 <body>
-    <h1>Manage Course</h1>
+    <h1>Manage Course: <%= course.course_id %> - <%= course.course_name %></h1>
     <!-- <a href="/instructor/dashboard">Back to Dashboard</a> -->
      <button onclick="window.location.href='/instructor/dashboard'">Back to Dashboard</button>
 
+    <!-- logout button  -->
+     <button onclick="window.location.href='/logout'">Logout</button>
+
     <hr>
+
+    <h3>Welcome, <%= user_full_name %>!</h3>
 
     <!-- TODO: Add Student Form -->
     <!-- Input: Student Username -->

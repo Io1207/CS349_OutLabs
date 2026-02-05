@@ -170,6 +170,7 @@ app.get('/student/dashboard', isAuthenticated, async (req, res) => {
 
         res.render('student_dashboard', {
             registeredCourses: registered.rows,
+            user_full_name: req.session.user.full_name,
             availableCourses: available.rows,
             totalCredits: creditsResult.rows[0].total,
             succ_message: success,
@@ -275,7 +276,7 @@ app.get('/instructor/dashboard', isAuthenticated, isInstructor, async (req, res)
         [instructorId]
     );
 
-    res.render('instructor_dashboard', { courses: courses.rows });
+    res.render('instructor_dashboard', { courses: courses.rows, user_full_name: req.session.user.full_name });
 });
 
 // TODO: Show students enrolled in a specific course
@@ -294,6 +295,8 @@ app.get('/instructor/course/:id', isAuthenticated, isInstructor, async (req, res
 
     res.render('instructor_course', {
         courseId,
+        course: (await getPool().query('SELECT * FROM Courses WHERE course_id=$1', [courseId])).rows[0],
+        user_full_name: req.session.user.full_name,
         students: students.rows,
         err_message: error
     });
