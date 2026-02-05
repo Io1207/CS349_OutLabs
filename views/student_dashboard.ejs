@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet" href="/style.css">
 
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard</title>
 </head>
 
+
 <body>
+    <div class="dashboard-header">
     <h1>Student Dashboard</h1>
-    <a href="/logout">Logout</a>
+    <button onclick="window.location.href='/logout'">Logout</button>
+    </div>
+
 
     <hr>
 
@@ -16,13 +21,22 @@
     <!-- Show: Course ID, Name, Credits, Slot -->
     <!-- Action: Drop Button -->
     <h2>My Registered Courses</h2>
-    <table style="border: 1px solid black;">
-    <tr><th>ID</th><th>Name</th><th>Slot</th><th>Action</th></tr>
+    <% if (succ_message) { %>
+        <p style="color: green; font-size: 22px;"><%= succ_message %></p>
+    <% } %>
+    <% if (err_message) { %>
+        <p style="color: red; font-size: 22px;"><%= err_message %></p>
+    <% } %>
+    <table style="border: 1px solid black; ">
+    <tr style="background-color: #f2f2f2;"><th>Course ID</th><th>Name</th><th>Credits</th><th>Slot</th><th>Instructor</th><th>Capacity</th><th>Action</th></tr>
     <% registeredCourses.forEach(c => { %>
     <tr>
     <td><%= c.course_id %></td>
     <td><%= c.course_name %></td>
+    <td><%= c.credits %></td>
     <td><%= c.slot %></td>
+    <td><%= c.instructor_id %></td>
+    <td><%= c.capacity %></td>
     <td>
     <form method="POST" action="/student/drop">
     <input type="hidden" name="course_id" value="<%= c.course_id %>">
@@ -33,18 +47,24 @@
     <% }) %>
     </table>
 
+    <!-- make a line -->
+    <hr>
+    <hr>
+
     <!-- TODO: Display Available Courses -->
     <!-- Show: Course ID, Name, Credits, Slot, Capacity -->
     <!-- Action: Register Button -->
     <h2>Available Courses</h2>
     <table style="border: 1px solid black;">
-    <tr><th>ID</th><th>Name</th><th>Slot</th><th>Credits</th><th>Action</th></tr>
+    <tr style="background-color: #f2f2f2;"><th>Course ID</th><th>Name</th><th>Credits</th><th>Slot</th><th>Instructor</th><th>Capacity</th><th>Action</th></tr>
     <% availableCourses.forEach(c => { %>
     <tr>
     <td><%= c.course_id %></td>
     <td><%= c.course_name %></td>
-    <td><%= c.slot %></td>
     <td><%= c.credits %></td>
+    <td><%= c.slot %></td>
+    <td><%= c.instructor_id %></td>
+    <td><%= c.capacity %></td>
     <td>
     <form method="POST" action="/student/register">
     <input type="hidden" name="course_id" value="<%= c.course_id %>">

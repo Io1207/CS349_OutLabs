@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<link rel="stylesheet" href="/style.css">
 <head>
     <meta charset="UTF-8">
     <title>Instructor Dashboard</title>
@@ -8,7 +8,12 @@
 
 <body>
     <h1>Instructor Dashboard</h1>
-    <a href="/logout">Logout</a>
+    <button onclick="window.location.href='/logout'">Logout</button>
+    <!-- <a href="/logout">Logout</a> -->
+
+    <!-- TODO: Display Courses Taught by Instructor -->
+    <!-- Link to Course Details page (/instructor/course/:id) -->
+    <h2>My Courses</h2>
 
     <ul>
     <% courses.forEach(c => { %>
@@ -20,10 +25,6 @@
     <% }) %>
     </ul>
     <hr>
-
-    <!-- TODO: Display Courses Taught by Instructor -->
-    <!-- Link to Course Details page (/instructor/course/:id) -->
-    <h2>My Courses</h2>
     
 
 </body>

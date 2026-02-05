@@ -6,9 +6,12 @@
     <title>Course Details</title>
 </head>
 
+<link rel="stylesheet" href="/style.css">
+
 <body>
     <h1>Manage Course</h1>
-    <a href="/instructor/dashboard">Back to Dashboard</a>
+    <!-- <a href="/instructor/dashboard">Back to Dashboard</a> -->
+     <button onclick="window.location.href='/instructor/dashboard'">Back to Dashboard</button>
 
     <hr>
 
@@ -26,17 +29,22 @@
     <!-- Show: Student ID, Name -->
     <!-- Action: Remove Button -->
     <h3>Enrolled Students</h3>
-    <ul>
+    <table>
+    <tr style="background-color: #f2f2f2;"><th>Student ID</th><th>Username</th><th>Full Name</th><th>Action</th></tr>
     <% students.forEach(s => { %>
-    <li>
-    <%= s.user_id %> - <%= s.full_name %>
+    <tr>
+    <td><%= s.user_id %></td>
+    <td><%= s.username %></td>
+    <td><%= s.full_name %></td>
+    <td>
     <form method="POST" action="/instructor/remove-student" style="display:inline">
     <input type="hidden" name="student_id" value="<%= s.user_id %>">
     <input type="hidden" name="course_id" value="<%= courseId %>">
     <button>Remove</button>
     </form>
-    </li>
+    </td>
+    </tr>
     <% }) %>
-    </ul>
+    </table>
 </body>
 </html>

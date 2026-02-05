@@ -58,24 +58,10 @@ function getPool() {
     return pool;
 }
 
-// Route to serve the credentials form
-// Route to serve the credentials form - DEPRECATED
-// app.get('/', (req, res) => {
-//     if (dbConfig) {
-//         res.redirect('/login');
-//     } else {
-//         res.render('credentials');
-//     }
-// });
 
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
-
-// Route to handle credentials submission - DEPRECATED
-// app.post('/set-credentials', (req, res) => {
-//     ...
-// });
 
 
 app.get('/login', (req, res) => {
@@ -128,6 +114,10 @@ app.get('/logout', (req, res) => {
 // 3. Calculate total credits
 app.get('/student/dashboard', isAuthenticated, async (req, res) => {
     const sID = req.session.user.user_id;
+    const success = req.session.success || null;
+    req.session.success = null; // Clear success message after displaying
+    const error = req.session.error || null;
+    req.session.error = null; // Clear error message after displaying
 
     try {
         const registered = await getPool().query(`
@@ -156,7 +146,8 @@ app.get('/student/dashboard', isAuthenticated, async (req, res) => {
             registeredCourses: registered.rows,
             availableCourses: available.rows,
             totalCredits: creditsResult.rows[0].total,
-            message: null
+            succ_message: success,
+            err_message: error
         });
     } catch (err) {
         console.error(err);
@@ -194,7 +185,8 @@ app.post('/student/register', isAuthenticated, async (req, res) => {
         `, [sID, course_id]);
 
         if (clash.rows.length) {
-            return res.send("Slot clash detected");
+            req.session.error = "Slot clash detected";
+            return res.redirect('/student/dashboard');
         }
 
         // Credit limit
@@ -204,7 +196,7 @@ app.post('/student/register', isAuthenticated, async (req, res) => {
             JOIN Courses c ON r.course_id = c.course_id
             WHERE r.student_id = $1
         `, [sID]);
-        console.log("Credit rows coalesced sum: ",credits.rows[0].total);
+        // console.log("Credit rows coalesced sum: ",credits.rows[0].total);
 
         const courseCredits = await getPool().query(
             'SELECT credits FROM Courses WHERE course_id=$1',
@@ -213,15 +205,18 @@ app.post('/student/register', isAuthenticated, async (req, res) => {
 
 
         if (credits.rows[0].total > 24) {
-            console.log("Credit limit being exceeded: rows sum, rows total: ", credits.rows[0].total, courseCredits.rows[0].credits);
-            console.log(credits.rows[0].total+ courseCredits.rows[0].credits);
-            return res.send("Credit limit exceeded");
+            // console.log("Credit limit being exceeded: rows sum, rows total: ", credits.rows[0].total, courseCredits.rows[0].credits);
+            // console.log(credits.rows[0].total+ courseCredits.rows[0].credits);
+            req.session.error = "Credit limit exceeded";
+            return res.redirect('/student/dashboard');
         }
 
         await getPool().query(
             'INSERT INTO Registrations(student_id, course_id) VALUES ($1,$2)',
             [sID, course_id]
         );
+
+        req.session.success = "Course registered successfully!";
 
         res.redirect('/student/dashboard');
     } catch (err) {
@@ -264,7 +259,7 @@ app.get('/instructor/course/:id', isAuthenticated, isInstructor, async (req, res
     const courseId = req.params.id;
 
     const students = await getPool().query(`
-        SELECT u.user_id, u.full_name
+        SELECT *
         FROM Registrations r
         JOIN Users u ON r.student_id = u.user_id
         WHERE r.course_id = $1
