@@ -308,11 +308,33 @@ app.get('/instructor/course/:id', isAuthenticated, isInstructor, async (req, res
 // 2. Check if already enrolled
 // 3. Check Credit Limit (If exceeded, allow but show WARNING)
 // 4. Insert into Registrations
+// app.post('/instructor/add-student', isAuthenticated, isInstructor, async (req, res) => {
+//     const { username, course_id } = req.body;
+
+//     const student = await getPool().query(
+//         'SELECT * FROM Users WHERE username=$1 AND role=\'student\'',
+//         [username]
+//     );
+
+//     if (!student.rows.length) {
+//         req.session.error = "Student not found";
+//         return res.redirect(`/instructor/course/${course_id}`);
+//     }
+
+//     await getPool().query(
+//         'INSERT INTO Registrations(student_id, course_id) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+//         [student.rows[0].user_id, course_id]
+//     );
+
+//     res.redirect(`/instructor/course/${course_id}`);
+// });
+
 app.post('/instructor/add-student', isAuthenticated, isInstructor, async (req, res) => {
     const { username, course_id } = req.body;
 
+    // 1. Check student exists
     const student = await getPool().query(
-        'SELECT * FROM Users WHERE username=$1 AND role=\'student\'',
+        "SELECT * FROM Users WHERE username=$1 AND role='student'",
         [username]
     );
 
@@ -321,13 +343,56 @@ app.post('/instructor/add-student', isAuthenticated, isInstructor, async (req, r
         return res.redirect(`/instructor/course/${course_id}`);
     }
 
+    const studentId = student.rows[0].user_id;
+
+    // 2. SLOT CLASH CHECK (BLOCK)
+    const slotClash = await getPool().query(`
+        SELECT 1
+        FROM Registrations r
+        JOIN Courses c1 ON r.course_id = c1.course_id
+        JOIN Courses c2 ON c2.course_id = $2
+        WHERE r.student_id = $1
+          AND c1.slot = c2.slot
+    `, [studentId, course_id]);
+
+    if (slotClash.rows.length) {
+        req.session.error = "Slot clash detected! Student cannot be added to this course.";
+        return res.redirect(`/instructor/course/${course_id}`);
+    }
+
+    // 3. CREDIT LIMIT CHECK (WARNING ONLY)
+    const currentCredits = await getPool().query(`
+        SELECT COALESCE(SUM(c.credits), 0) AS total
+        FROM Registrations r
+        JOIN Courses c ON r.course_id = c.course_id
+        WHERE r.student_id = $1
+    `, [studentId]);
+
+    const courseCredits = await getPool().query(
+        "SELECT credits FROM Courses WHERE course_id=$1",
+        [course_id]
+    );
+
+    const newTotal =
+        Number(currentCredits.rows[0].total) +
+        Number(courseCredits.rows[0].credits);
+
+    if (newTotal > 24) {
+        req.session.error =
+            "Warning: Student exceeds credit limit, but was added successfully.";
+    }
+
+    // 4. ADD STUDENT
     await getPool().query(
-        'INSERT INTO Registrations(student_id, course_id) VALUES ($1,$2) ON CONFLICT DO NOTHING',
-        [student.rows[0].user_id, course_id]
+        `INSERT INTO Registrations(student_id, course_id)
+         VALUES ($1, $2)
+         ON CONFLICT DO NOTHING`,
+        [studentId, course_id]
     );
 
     res.redirect(`/instructor/course/${course_id}`);
 });
+
 
 
 // TODO: Implement student removal
