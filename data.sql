@@ -1,4 +1,4 @@
-INSERT INTO Users (username, password, role, full_name) VALUES
+INSERT INTO users (username, password, role, full_name) VALUES
 ('prof_einstein', 'password', 'instructor', 'Albert Einstein'),
 ('prof_turing', 'password', 'instructor', 'Alan Turing'),
 ('prof_curie', 'password', 'instructor', 'Marie Curie'),
@@ -54,6 +54,6 @@ INSERT INTO Courses (course_id, course_name, credits, slot, instructor_id, capac
 ('EE202', 'Wireless Communication', 6, 'F', 10, 50); -- Clashes with PH103, EE102, CH201
 
 -- Insert Sample Students 
-INSERT INTO Users (username, password, role, full_name) VALUES
+INSERT INTO users (username, password, role, full_name) VALUES
 ('student1', 'password', 'student', 'Student One'),
 ('student2', 'password', 'student', 'Student Two');

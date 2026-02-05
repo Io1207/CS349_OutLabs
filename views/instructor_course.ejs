@@ -16,12 +16,27 @@
     <!-- Input: Student Username -->
     <!-- Action: /instructor/add-student -->
     <h3>Add Student</h3>
+    <form method="POST" action="/instructor/add-student">
+    <input name="username" placeholder="Student Username">
+    <input type="hidden" name="course_id" value="<%= courseId %>">
+    <button>Add</button>
+    </form>
 
     <!-- TODO: List Enrolled Students -->
     <!-- Show: Student ID, Name -->
     <!-- Action: Remove Button -->
     <h3>Enrolled Students</h3>
-
+    <ul>
+    <% students.forEach(s => { %>
+    <li>
+    <%= s.user_id %> - <%= s.full_name %>
+    <form method="POST" action="/instructor/remove-student" style="display:inline">
+    <input type="hidden" name="student_id" value="<%= s.user_id %>">
+    <input type="hidden" name="course_id" value="<%= courseId %>">
+    <button>Remove</button>
+    </form>
+    </li>
+    <% }) %>
+    </ul>
 </body>
-
 </html>

@@ -16,12 +16,45 @@
     <!-- Show: Course ID, Name, Credits, Slot -->
     <!-- Action: Drop Button -->
     <h2>My Registered Courses</h2>
+    <table style="border: 1px solid black;">
+    <tr><th>ID</th><th>Name</th><th>Slot</th><th>Action</th></tr>
+    <% registeredCourses.forEach(c => { %>
+    <tr>
+    <td><%= c.course_id %></td>
+    <td><%= c.course_name %></td>
+    <td><%= c.slot %></td>
+    <td>
+    <form method="POST" action="/student/drop">
+    <input type="hidden" name="course_id" value="<%= c.course_id %>">
+    <button>Drop</button>
+    </form>
+    </td>
+    </tr>
+    <% }) %>
+    </table>
 
     <!-- TODO: Display Available Courses -->
     <!-- Show: Course ID, Name, Credits, Slot, Capacity -->
     <!-- Action: Register Button -->
     <h2>Available Courses</h2>
-
+    <table style="border: 1px solid black;">
+    <tr><th>ID</th><th>Name</th><th>Slot</th><th>Credits</th><th>Action</th></tr>
+    <% availableCourses.forEach(c => { %>
+    <tr>
+    <td><%= c.course_id %></td>
+    <td><%= c.course_name %></td>
+    <td><%= c.slot %></td>
+    <td><%= c.credits %></td>
+    <td>
+    <form method="POST" action="/student/register">
+    <input type="hidden" name="course_id" value="<%= c.course_id %>">
+    <button>Register</button>
+    </form>
+    </td>
+    </tr>
+    <% }) %>
+    </table>
 </body>
 
 </html>
+
