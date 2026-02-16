@@ -35,18 +35,70 @@ function GroupDetails({ user }) {
     // - Fetch expenses using GET /groups/:id/expenses
     // - Update group, members, and expenses state
     // - Set default paidBy to current user if applicable
-    const fetchData = () => {
-        // Implement logic here
-    };
+    const fetchData = async () => {
+    try {
+        // Fetch group details
+        const groupResponse = await fetch(
+            `http://localhost:4000/groups/${id}`,
+            {
+                method: 'GET',
+                credentials: 'include'
+            }
+        );
+
+        if (!groupResponse.ok) {
+            throw new Error('Failed to fetch group details');
+        }
+
+        const groupData = await groupResponse.json();
+
+        setGroup(groupData);
+        setMembers(groupData.members || []);
+
+        // Set default paidBy to current user (if user exists in group)
+        if (groupData.members?.length > 0) {
+            const currentUserMember = groupData.members.find(
+                m => m.user_id === user.user_id
+            );
+
+            if (currentUserMember) {
+                setPaidBy(currentUserMember.user_id);
+            }
+        }
+
+        // Fetch expenses
+        const expensesResponse = await fetch(
+            `http://localhost:4000/groups/${id}/expenses`,
+            {
+                method: 'GET',
+                credentials: 'include'
+            }
+        );
+
+        if (!expensesResponse.ok) {
+            throw new Error('Failed to fetch expenses');
+        }
+
+        const expensesData = await expensesResponse.json();
+        setExpenses(expensesData);
+
+    } catch (error) {
+        console.error('Error fetching group details:', error);
+    }
+};
 
     // TODO: Fetch group data on component mount or when id changes
     useEffect(() => {
         // Call fetchData here
+        fetchData();
     }, [id]);
 
     // TODO: Set default paidBy when user info is available
     useEffect(() => {
         // Set paidBy to user.user_id if not already set
+        if (user && !paidBy) {
+            setPaidBy(user.user_id);
+        }
     }, [user]);
 
     // TODO: Implement handleAddExpense function
@@ -55,7 +107,37 @@ function GroupDetails({ user }) {
     // - Call POST /expenses API
     // - Reset form and refresh data on success
     const handleAddExpense = async (e) => {
-        // Implement logic here
+        e.preventDefault();
+        if (!description || !amount || !paidBy || splitWith.length === 0) {
+            alert("Please fill all fields");
+            return;
+        }
+        try {
+            const response = await fetch(`http://localhost:4000/expenses`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    group_id: id,
+                    description,
+                    amount,
+                    paid_by: paidBy,
+                    split_with: splitWith
+                })
+            });
+            if (response.ok) {
+                setDescription('');
+                setAmount('');
+                setSplitWith([]);
+                fetchData(); // Refresh data
+            } else {
+                alert("Failed to add expense");
+            }
+        } catch (error) {
+            console.error('Error adding expense:', error);
+        }
     };
 
     // TODO: Implement handleSettleUp function
@@ -63,13 +145,45 @@ function GroupDetails({ user }) {
     // - Call POST /settle API
     // - Show success or error messages
     const handleSettleUp = async (e) => {
-        // Implement logic here
+        e.preventDefault();
+        if (!settleTo || !settleAmount) {
+            alert("Please fill all fields");
+            return;
+        }
+        try {
+            const response = await fetch(`http://localhost:4000/settle`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    group_id: id,
+                    to_user_id: settleTo,
+                    amount: settleAmount
+                })
+            });
+            if (response.ok) {
+                setSettleTo('');
+                setSettleAmount('');
+                fetchData(); // Refresh data
+            } else {
+                alert("Failed to settle up");
+            }
+        } catch (error) {
+            console.error('Error settling up:', error);
+        }
     };
 
     // TODO: Implement toggleSplitMember function
     // - Add/remove user ID from splitWith list
     const toggleSplitMember = (uid) => {
         // Implement logic here
+        if (splitWith.includes(uid)) {
+            setSplitWith(splitWith.filter(id => id !== uid));
+        } else {
+            setSplitWith([...splitWith, uid]);
+        }
     };
 
     return (
@@ -82,6 +196,85 @@ function GroupDetails({ user }) {
               - Group name and expense history
               - Loading state when group data is not available
             */}
+                <h2>Group Details (ID: {id})</h2>
+                {!group ? (
+                    <p>Loading group details...</p>
+                ) : (
+                    <div>
+                        <h3>{group.name}</h3>
+                        <h4>Members:</h4>
+                        <ul>
+                            {members.map(member => (
+                                <li key={member.user_id}>{member.username}</li>
+                            ))}
+                        </ul>
+                        <h4>Expenses:</h4>
+                        <ul>
+                            {expenses.map(expense => (
+                                <li key={expense.expense_id}>
+                                    {expense.description} - ${expense.amount} (Paid by: {expense.paid_by})
+                                </li>
+                            ))}
+                        </ul>
+
+                        <h4>Add Expense</h4>
+                        <form onSubmit={handleAddExpense}>
+                            <input
+                                type="text"
+                                placeholder="Description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                            <input
+                                type="number"
+                                placeholder="Amount"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                            />
+                            <select value={paidBy} onChange={(e) => setPaidBy(e.target.value)}>
+                                <option value="">Select who paid</option>
+                                {members.map(member => (
+                                    <option key={member.user_id} value={member.user_id}>
+                                        {member.username}
+                                    </option>
+                                ))}
+                            </select>
+                            <div>
+                                <p>Split with:</p>
+                                {members.map(member => (
+                                    <label key={member.user_id}>
+                                        <input
+                                            type="checkbox"
+                                            checked={splitWith.includes(member.user_id)}
+                                            onChange={() => toggleSplitMember(member.user_id)}
+                                        />
+                                        {member.username}
+                                    </label>
+                                ))}
+                            </div>
+                            <button type="submit">Add Expense</button>
+                        </form>
+
+                        <h4>Settle Up</h4>
+                        <form onSubmit={handleSettleUp}>
+                            <select value={settleTo} onChange={(e) => setSettleTo(e.target.value)}>
+                                <option value="">Select who to settle with</option>
+                                {members.map(member => (
+                                    <option key={member.user_id} value={member.user_id}>
+                                        {member.username}
+                                    </option>
+                                ))}
+                            </select>
+                            <input
+                                type="number"
+                                placeholder="Amount"
+                                value={settleAmount}
+                                onChange={(e) => setSettleAmount(e.target.value)}
+                            />
+                            <button type="submit">Settle Up</button>
+                        </form>
+                    </div>
+                )}
         </>
     );
 }

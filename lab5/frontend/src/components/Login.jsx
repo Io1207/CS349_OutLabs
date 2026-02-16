@@ -18,6 +18,7 @@ function Login({ onLogin }) {
     //   - Call onLogin with user data
     // - Handle error responses
     const handleSubmit = async (e) => {
+        e.preventDefault();
         const endpoint = isSignup ? '/signup' : '/login';
         try {
             const response = await fetch(`http://localhost:4000${endpoint}`, {
@@ -25,11 +26,12 @@ function Login({ onLogin }) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(formData),
             });
             const data = await response.json();
             if (response.ok) {
-                onLogin(data);
+                onLogin(data.user);
             } else {
                 setError(data.error || 'An error occurred');
             }
@@ -42,13 +44,13 @@ function Login({ onLogin }) {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     }
 
-    
+
     return (
         <div style={{ maxWidth: '400px', margin: '50px auto' }}>
             <h2>{isSignup ? 'Sign Up' : 'Login'}</h2>
 
             <form onSubmit={handleSubmit}>
-                
+
                 {/* Username */}
                 <div>
                     <input
@@ -101,8 +103,8 @@ function Login({ onLogin }) {
             {/* Toggle */}
             <p style={{ marginTop: '10px' }}>
                 {isSignup ? 'Already have an account?' : "Don't have an account?"}
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onClick={() => {
                         setIsSignup(!isSignup);
                         setError('');

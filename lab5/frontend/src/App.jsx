@@ -126,8 +126,8 @@ function App() {
           <Route path="/" element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} />
           <Route path="/groups" element={user ? <Groups user={user} /> : <Navigate to="/login" />} />
           <Route path="/groups/create" element={user ? <CreateGroup user={user} /> : <Navigate to="/login" />} />
-          <Route path="/group/:id" element={user ? <div>Group Details</div> : <Navigate to="/login" />} />
-          <Route path="/friends" element={user ? <div>Friends List</div> : <Navigate to="/login" />} />
+          <Route path="/group/:id" element={user ? <GroupDetails user={user} /> : <Navigate to="/login" />} />
+          <Route path="/friends" element={user ? <Friends user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </div>

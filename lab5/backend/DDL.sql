@@ -15,7 +15,7 @@ CREATE TABLE Users (
     email VARCHAR(100)
 );
 
--- 2. Friends
+-- 2. Friend
 CREATE TABLE Friend (
     user_id INT NOT NULL,
     friend_id INT NOT NULL,

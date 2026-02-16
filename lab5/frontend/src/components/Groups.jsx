@@ -13,13 +13,26 @@ function Groups() {
     // - Include credentials
     // - Update groups state
     // - Handle error cases
-    const fetchData = () => {
-        // Implement logic here
+    const fetchData = async () => {
+        try {
+            const response = await fetch('http://localhost:4000/groups', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setGroups(data);
+            } else {
+                console.error('Failed to fetch groups');
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+        }
     };
 
     // TODO: Fetch group list on component mount
     useEffect(() => {
-        // Call fetchData here
+        fetchData();
     }, []);
 
     return (
@@ -31,6 +44,27 @@ function Groups() {
               - Navigate to /groups/create on button click
               - Show empty-state message when no groups exist
             */}
+            <div className="container mt-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Groups</h2>
+                    <button className="btn btn-primary" onClick={() => navigate('/groups/create')}>
+                        Create New Group
+                    </button>
+                </div>
+                {groups.length === 0 ? (
+                    <p>No groups found. Create a new group to get started!</p>
+                ) : (
+                    <ul className="list-group">
+                        {groups.map(group => (
+                            <li key={group.group_id} className="list-group-item d-flex justify-content-between align-items-center">
+                                <Link to={`/groups/${group.group_id}`} className="btn btn-sm btn-outline-secondary">
+                                    {group.name}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </>
     );
 }
