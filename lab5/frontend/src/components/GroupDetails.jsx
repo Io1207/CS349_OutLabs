@@ -108,10 +108,20 @@ function GroupDetails({ user }) {
     // - Reset form and refresh data on success
     const handleAddExpense = async (e) => {
         e.preventDefault();
+
         if (!description || !amount || !paidBy || splitWith.length === 0) {
             alert("Please fill all fields");
             return;
         }
+
+        const totalAmount = parseFloat(amount);
+        const splitAmount = totalAmount / splitWith.length;
+
+        const splits = splitWith.map(userId => ({
+            userId,
+            amount: splitAmount
+        }));
+
         try {
             const response = await fetch(`http://localhost:4000/expenses`, {
                 method: 'POST',
@@ -120,18 +130,19 @@ function GroupDetails({ user }) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    group_id: id,
+                    groupId: id,
                     description,
-                    amount,
+                    amount: totalAmount,
                     paid_by: paidBy,
-                    split_with: splitWith
+                    splits
                 })
             });
+
             if (response.ok) {
                 setDescription('');
                 setAmount('');
                 setSplitWith([]);
-                fetchData(); // Refresh data
+                fetchData();
             } else {
                 alert("Failed to add expense");
             }
@@ -159,7 +170,7 @@ function GroupDetails({ user }) {
                 },
                 body: JSON.stringify({
                     group_id: id,
-                    to_user_id: settleTo,
+                    to_user: Number(settleTo),
                     amount: settleAmount
                 })
             });
@@ -212,7 +223,7 @@ function GroupDetails({ user }) {
                         <ul>
                             {expenses.map(expense => (
                                 <li key={expense.expense_id}>
-                                    {expense.description} - ${expense.amount} (Paid by: {expense.paid_by})
+                                    {expense.description} - ₹{expense.amount} (Paid by: {expense.paid_by})
                                 </li>
                             ))}
                         </ul>
@@ -255,7 +266,7 @@ function GroupDetails({ user }) {
                             <button type="submit">Add Expense</button>
                         </form>
 
-                        <h4>Settle Up</h4>
+                        {/* <h4>Settle Up</h4>
                         <form onSubmit={handleSettleUp}>
                             <select value={settleTo} onChange={(e) => setSettleTo(e.target.value)}>
                                 <option value="">Select who to settle with</option>
@@ -272,11 +283,128 @@ function GroupDetails({ user }) {
                                 onChange={(e) => setSettleAmount(e.target.value)}
                             />
                             <button type="submit">Settle Up</button>
-                        </form>
+                        </form> */}
+                        {/* Settle Up Section */}
+                        <div style={styles.card}>
+                            <h2>Settle Up</h2>
+                            <form onSubmit={handleSettleUp}>
+                                <select
+                                    value={settleTo}
+                                    onChange={(e) => setSettleTo(e.target.value)}
+                                    style={styles.input}
+                                >
+                                    <option value="">Select who to settle with</option>
+                                    {members.map((member) => (
+                                        <option key={member.user_id} value={member.user_id}>
+                                            {member.username}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <input
+                                    type="number"
+                                    placeholder="Enter amount"
+                                    value={settleAmount}
+                                    onChange={(e) => setSettleAmount(e.target.value)}
+                                    style={styles.input}
+                                />
+
+                                <button type="submit" style={styles.button}>
+                                    Settle
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 )}
         </>
     );
 }
 
+const styles = {
+  /* Page Background */
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f4f6f9",
+    padding: "30px",
+    fontFamily: "Inter, sans-serif",
+  },
+
+  /* Card Container (for all sections) */
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "24px",
+    borderRadius: "12px",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
+    marginBottom: "24px",
+  },
+
+  /* Section Titles */
+  heading: {
+    marginBottom: "16px",
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+
+  /* Inputs & Selects */
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "14px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    fontSize: "14px",
+    outline: "none",
+    transition: "all 0.2s ease",
+  },
+
+  /* Primary Button */
+  button: {
+    backgroundColor: "#4f46e5",
+    color: "#ffffff",
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  },
+
+  /* Success Text */
+  successText: {
+    color: "#16a34a",
+    fontWeight: "500",
+  },
+
+  /* Danger Text */
+  dangerText: {
+    color: "#dc2626",
+    fontWeight: "500",
+  },
+
+  /* Links */
+  link: {
+    color: "#4f46e5",
+    textDecoration: "none",
+    fontWeight: "500",
+  },
+
+  /* List styling */
+  list: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+  },
+
+  listItem: {
+    padding: "10px 0",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    justifyContent: "space-between",
+  }
+};
+
 export default GroupDetails;
+
+
+

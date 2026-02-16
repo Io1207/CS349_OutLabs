@@ -109,7 +109,7 @@ function Friends() {
               - Add Friend button for search results
               - Show empty-state message when no friends exist
             */}
-            <div style={{ maxWidth: "600px", margin: "40px auto" }}>
+            <div style={styles.card}>
             <h2>My Friends</h2>
 
             {friends.length === 0 ? (
@@ -157,5 +157,89 @@ function Friends() {
         </>
     );
 }
+
+const styles = {
+  /* Page Background */
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f4f6f9",
+    padding: "30px",
+    fontFamily: "Inter, sans-serif",
+  },
+
+  /* Card Container (for all sections) */
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "24px",
+    borderRadius: "12px",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
+    marginBottom: "24px",
+  },
+
+  /* Section Titles */
+  heading: {
+    marginBottom: "16px",
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+
+  /* Inputs & Selects */
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "14px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    fontSize: "14px",
+    outline: "none",
+    transition: "all 0.2s ease",
+  },
+
+  /* Primary Button */
+  button: {
+    backgroundColor: "#4f46e5",
+    color: "#ffffff",
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  },
+
+  /* Success Text */
+  successText: {
+    color: "#16a34a",
+    fontWeight: "500",
+  },
+
+  /* Danger Text */
+  dangerText: {
+    color: "#dc2626",
+    fontWeight: "500",
+  },
+
+  /* Links */
+  link: {
+    color: "#4f46e5",
+    textDecoration: "none",
+    fontWeight: "500",
+  },
+
+  /* List styling */
+  list: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+  },
+
+  listItem: {
+    padding: "10px 0",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    justifyContent: "space-between",
+  }
+};
 
 export default Friends;

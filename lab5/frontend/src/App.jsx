@@ -89,25 +89,52 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" style={styles.card}>
       {/* TODO: Show navigation bar only when user is logged in */}
       {user && (
-        <nav className="container">
-          <div className="logo">
-            {/* Display application name and username */}
-            Expense Splitter | {user.username}
-          </div>
+        <nav style={styles.navbar}>
+        <div style={styles.logo}>
+          Expense Splitter | Hello, {user.username}
+        </div>
 
-          <div className="nav-links">
-            {/* TODO: Add navigation links */}
-            {/* Dashboard, Groups, Friends */}
-            {/* Add logout button */}
-            <Link to="/">Dashboard</Link>
-            <Link to="/groups">Groups</Link>
-            <Link to="/friends">Friends</Link>
-            <button onClick={handleLogout}>Logout</button>
-          </div>
-        </nav>
+        <div style={styles.navLinks}>
+          <Link
+            to="/"
+            style={styles.navLink}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#eef2ff"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "transparent"}
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            to="/groups"
+            style={styles.navLink}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#eef2ff"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "transparent"}
+          >
+            Groups
+          </Link>
+
+          <Link
+            to="/friends"
+            style={styles.navLink}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#eef2ff"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "transparent"}
+          >
+            Friends
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            style={styles.logoutButton}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#dc2626"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "#ef4444"}
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
       )}
 
       <div className="container">
@@ -126,12 +153,140 @@ function App() {
           <Route path="/" element={user ? <Dashboard user={user} /> : <Navigate to="/login" />} />
           <Route path="/groups" element={user ? <Groups user={user} /> : <Navigate to="/login" />} />
           <Route path="/groups/create" element={user ? <CreateGroup user={user} /> : <Navigate to="/login" />} />
-          <Route path="/group/:id" element={user ? <GroupDetails user={user} /> : <Navigate to="/login" />} />
+          <Route path="/groups/:id" element={user ? <GroupDetails user={user} /> : <Navigate to="/login" />} />
           <Route path="/friends" element={user ? <Friends user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </div>
   );
 }
+const styles = {
+  /* ================= NAVBAR ================= */
 
+navbar: {
+  backgroundColor: "#ffffff",
+  padding: "16px 30px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+  borderRadius: "12px",
+  marginBottom: "30px",
+},
+
+logo: {
+  fontSize: "18px",
+  fontWeight: "600",
+  color: "#1f2937",
+},
+
+navLinks: {
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+},
+
+navLink: {
+  textDecoration: "none",
+  color: "#374151",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "all 0.2s ease",
+  padding: "6px 10px",
+  borderRadius: "6px",
+},
+
+logoutButton: {
+  backgroundColor: "#ef4444",
+  color: "#ffffff",
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "all 0.2s ease",
+},
+  /* Page Background */
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f4f6f9",
+    padding: "30px",
+    fontFamily: "Inter, sans-serif",
+  },
+
+  /* Card Container (for all sections) */
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "24px",
+    borderRadius: "12px",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
+    marginBottom: "24px",
+  },
+
+  /* Section Titles */
+  heading: {
+    marginBottom: "16px",
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+
+  /* Inputs & Selects */
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "14px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    fontSize: "14px",
+    outline: "none",
+    transition: "all 0.2s ease",
+  },
+
+  /* Primary Button */
+  button: {
+    backgroundColor: "#4f46e5",
+    color: "#ffffff",
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  },
+
+  /* Success Text */
+  successText: {
+    color: "#16a34a",
+    fontWeight: "500",
+  },
+
+  /* Danger Text */
+  dangerText: {
+    color: "#dc2626",
+    fontWeight: "500",
+  },
+
+  /* Links */
+  link: {
+    color: "#4f46e5",
+    textDecoration: "none",
+    fontWeight: "500",
+  },
+
+  /* List styling */
+  list: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+  },
+
+  listItem: {
+    padding: "10px 0",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    justifyContent: "space-between",
+  }
+};
 export default App;

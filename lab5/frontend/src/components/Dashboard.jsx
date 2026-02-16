@@ -87,6 +87,7 @@ function Dashboard() {
         }
 
         try {
+            console.log(settleTo);
             const res = await fetch('http://localhost:4000/settle', {
                 method: 'POST',
                 headers: {
@@ -94,7 +95,7 @@ function Dashboard() {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    to_user: settleTo,
+                    to_user: Number(settleTo),
                     amount: parseFloat(settleAmount)
                 })
             });
@@ -130,31 +131,37 @@ function Dashboard() {
             {message && <p style={styles.message}>{message}</p>}
 
             {/* Balances Section */}
-            <div style={styles.card}>
-                <h2>Your Balances</h2>
-                {balances.length === 0 ? (
-                    <p>No balances yet.</p>
-                ) : (
-                    <ul>
-                        {balances.map((balance, index) => (
-                            <li key={index}>
-                                {balance.friend_name} :
-                                {balance.amount > 0 ? (
-                                    <span style={{ color: 'green' }}>
-                                        {" "}You are owed ₹{balance.amount}
-                                    </span>
-                                ) : (
-                                    <span style={{ color: 'red' }}>
-                                        {" "}You owe ₹{Math.abs(balance.amount)}
-                                    </span>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
+                        <div style={styles.card}>
+                            <h2>Your Balances</h2>
+                            {balances.length === 0 ? (
+                                <p>No balances yet.</p>     
+                            ) : (
+                                <ul>
+                                {balances
+                                    .filter(
+                                    (balance) =>
+                                        balance.username !== sessionStorage.getItem('user') &&
+                                        balance.amount !== 0
+                                    )
+                                    .map((balance) => (
+                                    <li key={balance.username}>
+                                        {balance.username} :
+                                        {balance.amount > 0 ? (
+                                        <span style={{ color: 'green' }}>
+                                            {" "} owes you ₹{Math.abs(balance.amount)}
+                                        </span>
+                                        ) : (
+                                        <span style={{ color: 'red' }}>
+                                            {" "} You owe ₹{Math.abs(balance.amount)}
+                                        </span>
+                                        )}
+                                    </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
 
-            {/* Settle Up Section */}
+                        {/* Settle Up Section */}
             <div style={styles.card}>
                 <h2>Settle Up</h2>
                 <form onSubmit={handleSettleUp}>
@@ -165,7 +172,7 @@ function Dashboard() {
                     >
                         <option value="">Select Friend</option>
                         {friends.map((friend) => (
-                            <option key={friend.user_id} value={friend.username}>
+                            <option key={friend.user_id} value={friend.user_id}>
                                 {friend.username}
                             </option>
                         ))}
@@ -184,53 +191,139 @@ function Dashboard() {
                     </button>
                 </form>
             </div>
-
-            {/* Navigation */}
-            <div style={styles.links}>
-                <Link to="/groups">Go to Groups</Link>
-                <Link to="/friends">Go to Friends</Link>
-            </div>
         </div>
         </>
     );
 }
 
 const styles = {
-    container: {
-        maxWidth: '700px',
-        margin: '40px auto',
-        padding: '20px',
-        fontFamily: 'Arial'
-    },
-    card: {
-        background: '#f5f5f5',
-        padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '20px'
-    },
-    input: {
-        display: 'block',
-        width: '100%',
-        padding: '10px',
-        marginBottom: '10px'
-    },
-    button: {
-        padding: '10px 20px',
-        background: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer'
-    },
-    links: {
-        display: 'flex',
-        justifyContent: 'space-between'
-    },
-    message: {
-        marginBottom: '15px',
-        color: 'purple'
-    }
-};
+  /* ================= NAVBAR ================= */
 
+navbar: {
+  backgroundColor: "#ffffff",
+  padding: "16px 30px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+  borderRadius: "12px",
+  marginBottom: "30px",
+},
+
+logo: {
+  fontSize: "18px",
+  fontWeight: "600",
+  color: "#1f2937",
+},
+
+navLinks: {
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+},
+
+navLink: {
+  textDecoration: "none",
+  color: "#374151",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "all 0.2s ease",
+  padding: "6px 10px",
+  borderRadius: "6px",
+},
+
+logoutButton: {
+  backgroundColor: "#ef4444",
+  color: "#ffffff",
+  padding: "8px 14px",
+  borderRadius: "8px",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "all 0.2s ease",
+},
+  /* Page Background */
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f4f6f9",
+    padding: "30px",
+    fontFamily: "Inter, sans-serif",
+  },
+
+  /* Card Container (for all sections) */
+  card: {
+    backgroundColor: "#ffffff",
+    padding: "24px",
+    borderRadius: "12px",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
+    marginBottom: "24px",
+  },
+
+  /* Section Titles */
+  heading: {
+    marginBottom: "16px",
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+
+  /* Inputs & Selects */
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "14px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    fontSize: "14px",
+    outline: "none",
+    transition: "all 0.2s ease",
+  },
+
+  /* Primary Button */
+  button: {
+    backgroundColor: "#4f46e5",
+    color: "#ffffff",
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "500",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  },
+
+  /* Success Text */
+  successText: {
+    color: "#16a34a",
+    fontWeight: "500",
+  },
+
+  /* Danger Text */
+  dangerText: {
+    color: "#dc2626",
+    fontWeight: "500",
+  },
+
+  /* Links */
+  link: {
+    color: "#4f46e5",
+    textDecoration: "none",
+    fontWeight: "500",
+  },
+
+  /* List styling */
+  list: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+  },
+
+  listItem: {
+    padding: "10px 0",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    justifyContent: "space-between",
+  }
+};
 
 export default Dashboard;

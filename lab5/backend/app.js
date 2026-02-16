@@ -65,8 +65,8 @@ async function updateBalance(client, payerId, debtorId, amount) {
     );
     await client.query(
       `INSERT INTO Balance (user_id, other_user_id, amount) VALUES ($1, $2, $3)
-       ON CONFLICT (user_id, other_user_id) DO UPDATE SET amount = Balance.amount - EXCLUDED.amount`,
-      [debtorId, payerId, amount]
+       ON CONFLICT (user_id, other_user_id) DO UPDATE SET amount = Balance.amount + EXCLUDED.amount`,
+      [debtorId, payerId, -amount]
     );
   }
   catch (err) {
@@ -292,21 +292,35 @@ app.get('/groups/:id', checkAuth, async (req, res) => {
 
 // TODO: Add an expense, splits, and update balances
 app.post('/expenses', checkAuth, async (req, res) => {
-  // TODO
-  const { groupId, description, amount, splits } = req.body;
-  try{
+
+  const { groupId, description, amount, paid_by, splits = [] } = req.body;
+
+  try {
+
     const result = await pool.query(
-      'INSERT INTO Expenses (group_id, paid_by, amount, description) VALUES ($1, $2, $3, $4) RETURNING expense_id',
-      [groupId, req.session.user.user_id, amount, description]
+      'INSERT INTO expense (group_id, paid_by, amount, description) VALUES ($1, $2, $3, $4) RETURNING expense_id',
+      [groupId, paid_by, amount, description]
     );
+
     const expenseId = result.rows[0].expense_id;
+
     for (const split of splits) {
+
       await pool.query(
-        'INSERT INTO ExpenseSplits (expense_id, user_id, share_amount) VALUES ($1, $2, $3)',
+        'INSERT INTO expensesplit (expense_id, user_id, share_amount) VALUES ($1, $2, $3)',
         [expenseId, split.userId, split.amount]
       );
-      await updateBalance(pool, req.session.user.user_id, split.userId, split.amount);
+
+      await updateBalance(
+        pool,
+        paid_by,
+        split.userId,
+        split.amount
+      );
     }
+
+    res.status(200).json({ message: 'Expense added' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -319,7 +333,7 @@ app.get('/groups/:id/expenses', checkAuth, async (req, res) => {
   const groupId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT e.expense_id, e.amount, e.description, u.username, e.created_at FROM Expenses e JOIN Users u ON e.paid_by = u.user_id WHERE e.group_id = $1',
+      'SELECT e.expense_id, e.amount, e.description, u.username as paid_by, e.created_at FROM Expense e JOIN Users u ON e.paid_by = u.user_id WHERE e.group_id = $1',
       [groupId]
     );
     const expenses = result.rows;
@@ -342,14 +356,14 @@ app.post('/settle', checkAuth, async (req, res) => {
     // from_user (Debtor) PAYS to_user (Creditor).
     // to_user's claim on from_user REDUCES. ('amount' in updateBalance is logic for INCREASE).
     // So we pass NEGATIVE amount to updateBalance(Creditor, Debtor, -amount).
-  const { toUserId, amount } = req.body;
+  const { to_user, amount } = req.body;
   const fromUserId = req.session.user.user_id;
   try {
     await pool.query(
-      'INSERT INTO Settlements (from_user, to_user, amount) VALUES ($1, $2, $3)',
-      [fromUserId, toUserId, amount]
+      'INSERT INTO Settlement (from_user, to_user, amount) VALUES ($1, $2, $3)',
+      [fromUserId, to_user, amount]
     );
-    await updateBalance(pool, toUserId, fromUserId, -amount);
+    await updateBalance(pool, to_user, fromUserId, -amount);
     res.status(200).json({ message: 'Settlement successful' });
   } catch (err) {
     console.error(err);
@@ -363,7 +377,7 @@ app.get('/balances', checkAuth, async (req, res) => {
   const userId = req.session.user.user_id;
   try {
     const result = await pool.query(
-      'SELECT u.user_id, u.username, b.amount FROM Balance b JOIN Users u ON b.other_user_id = u.user_id WHERE b.user_id = $1',
+      'SELECT u.user_id, u.username, b.amount FROM Balance b JOIN Users u ON b.other_user_id = u.user_id WHERE b.user_id = $1 AND b.amount!=0',
       [userId]
     );
     res.status(200).json(result.rows);
