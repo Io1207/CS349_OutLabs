@@ -58,6 +58,7 @@ function checkAuth(req, res, next) {
 async function updateBalance(client, payerId, debtorId, amount) {
   // TODO
   try {
+    await client.query('BEGIN');
     await client.query(
       `INSERT INTO Balance (user_id, other_user_id, amount) VALUES ($1, $2, $3)
        ON CONFLICT (user_id, other_user_id) DO UPDATE SET amount = Balance.amount + EXCLUDED.amount`,
@@ -68,8 +69,10 @@ async function updateBalance(client, payerId, debtorId, amount) {
        ON CONFLICT (user_id, other_user_id) DO UPDATE SET amount = Balance.amount + EXCLUDED.amount`,
       [debtorId, payerId, -amount]
     );
+    await client.query('COMMIT');
   }
   catch (err) {
+    await client.query('ROLLBACK');
     console.error('Error updating balance:', err);
     throw err;
   }
@@ -89,7 +92,7 @@ app.post('/signup', async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    await pool.query('BEGIN');
     const result = await pool.query(
       'INSERT INTO Users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING user_id, username',
       [username, hashedPassword, email]
@@ -102,12 +105,15 @@ app.post('/signup', async (req, res) => {
       username: newUser.username
     };
 
+    await pool.query('COMMIT');
+
     res.status(201).json({
       user_id: newUser.user_id,
       username: newUser.username
     });
 
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -118,10 +124,12 @@ app.post('/login', async (req, res) => {
   // TODO
   const { username, password } = req.body;  
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT user_id, password_hash FROM Users WHERE username = $1',
       [username]
     );
+    await pool.query('COMMIT');
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not Found' });
     }
@@ -134,6 +142,7 @@ app.post('/login', async (req, res) => {
     res.status(200).json({ "message": "Login successful", "user": { "user_id": user.user_id, "username": username } });
   }
   catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -173,12 +182,15 @@ app.get('/users/search', checkAuth, async (req, res) => {
   const searchQuery = req.query.q;
   const currentUserId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT user_id, username FROM Users WHERE username ILIKE $1 AND user_id != $2',
       [`%${searchQuery}%`, currentUserId]
     );
+    await pool.query('COMMIT');
     res.status(200).json(result.rows);
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -190,12 +202,15 @@ app.post('/friends/add', checkAuth, async (req, res) => {
   const { friendId } = req.body;
   const userId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     await pool.query(
       'INSERT INTO Friend (user_id, friend_id) VALUES ($1, $2), ($2, $1) ON CONFLICT DO NOTHING',
       [userId, friendId]
     );
+      await pool.query('COMMIT');
     res.status(200).json({ message: 'Friend added' });
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -206,12 +221,15 @@ app.get('/friends', checkAuth, async (req, res) => {
   // TODO
   const userId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT u.user_id, u.username FROM Users u JOIN Friend f ON u.user_id = f.friend_id WHERE f.user_id = $1',
       [userId]
     );
+    await pool.query('COMMIT');
     res.status(200).json(result.rows);
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -224,6 +242,7 @@ app.post('/groups', checkAuth, async (req, res) => {
   // TODO
   const { name, member_ids } = req.body;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'INSERT INTO Groups (name, created_by) VALUES ($1, $2) RETURNING group_id',
       [name, req.session.user.user_id]
@@ -240,8 +259,10 @@ app.post('/groups', checkAuth, async (req, res) => {
       'INSERT INTO GroupMember (group_id, user_id) VALUES ($1, $2)',
       [groupId, req.session.user.user_id]
     );
+    await pool.query('COMMIT');
     res.status(200).json({ message: 'Group created', group_id: groupId });
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Group Creation Server error' });
   }
@@ -252,12 +273,15 @@ app.get('/groups', checkAuth, async (req, res) => {
   // TODO
   const userId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT g.group_id, g.name FROM Groups g JOIN GroupMember gm ON g.group_id = gm.group_id WHERE gm.user_id = $1',
       [userId]
     );
+    await pool.query('COMMIT');
     res.status(200).json(result.rows);
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -268,6 +292,7 @@ app.get('/groups/:id', checkAuth, async (req, res) => {
   // TODO
   const groupId = req.params.id;
   try {
+    await pool.query('BEGIN');
     const groupResult = await pool.query(
       'SELECT group_id, name FROM Groups WHERE group_id = $1',
       [groupId]
@@ -280,9 +305,11 @@ app.get('/groups/:id', checkAuth, async (req, res) => {
       'SELECT u.user_id, u.username FROM Users u JOIN GroupMember gm ON u.user_id = gm.user_id WHERE gm.group_id = $1',
       [groupId]
     );
+      await pool.query('COMMIT');
     group.members = membersResult.rows;
     res.status(200).json(group);
   } catch (err) {
+      await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -296,7 +323,7 @@ app.post('/expenses', checkAuth, async (req, res) => {
   const { groupId, description, amount, paid_by, splits = [] } = req.body;
 
   try {
-
+    await pool.query('BEGIN');
     const result = await pool.query(
       'INSERT INTO expense (group_id, paid_by, amount, description) VALUES ($1, $2, $3, $4) RETURNING expense_id',
       [groupId, paid_by, amount, description]
@@ -318,10 +345,12 @@ app.post('/expenses', checkAuth, async (req, res) => {
         split.amount
       );
     }
+    await pool.query('COMMIT');
 
     res.status(200).json({ message: 'Expense added' });
 
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -332,15 +361,18 @@ app.get('/groups/:id/expenses', checkAuth, async (req, res) => {
   // TODO
   const groupId = req.params.id;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT e.expense_id, e.amount, e.description, u.username as paid_by, e.created_at FROM Expense e JOIN Users u ON e.paid_by = u.user_id WHERE e.group_id = $1',
       [groupId]
     );
+    await pool.query('COMMIT');
     const expenses = result.rows;
 
     res.status(200).json(result.rows);
   }
   catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -359,13 +391,16 @@ app.post('/settle', checkAuth, async (req, res) => {
   const { to_user, amount } = req.body;
   const fromUserId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     await pool.query(
       'INSERT INTO Settlement (from_user, to_user, amount) VALUES ($1, $2, $3)',
       [fromUserId, to_user, amount]
     );
     await updateBalance(pool, to_user, fromUserId, -amount);
+    await pool.query('COMMIT');
     res.status(200).json({ message: 'Settlement successful' });
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -376,12 +411,15 @@ app.get('/balances', checkAuth, async (req, res) => {
   // TODO
   const userId = req.session.user.user_id;
   try {
+    await pool.query('BEGIN');
     const result = await pool.query(
       'SELECT u.user_id, u.username, b.amount FROM Balance b JOIN Users u ON b.other_user_id = u.user_id WHERE b.user_id = $1 AND b.amount!=0',
       [userId]
     );
+    await pool.query('COMMIT');
     res.status(200).json(result.rows);
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }

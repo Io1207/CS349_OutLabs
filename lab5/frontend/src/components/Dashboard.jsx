@@ -104,7 +104,7 @@ function Dashboard() {
                 throw new Error("Settlement failed");
             }
 
-            setMessage("Settlement successful 🎉");
+            setMessage("Settlement successful!");
             setSettleTo('');
             setSettleAmount('');
             fetchData(); // Refresh balances
