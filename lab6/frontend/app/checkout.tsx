@@ -5,9 +5,8 @@ import { useRouter, Stack } from 'expo-router';
 import { apiCall } from '../utils/api';
 
 export default function Checkout() {
-    // TODO: Define state variables (address, loading)
-    const router = useRouter();
 
+    // TODO: Define state variables (address, loading)
     const [address, setAddress] = useState({
         street: '',
         city: '',
@@ -17,7 +16,9 @@ export default function Checkout() {
 
     const [loading, setLoading] = useState(false);
 
-    const updateField = (key: string, value: string) => {
+    const router = useRouter();
+
+    const updateField = (key, value) => {
         setAddress({ ...address, [key]: value });
     };
 
@@ -26,10 +27,16 @@ export default function Checkout() {
         // 1. Validate that all address fields are filled
         // 2. Call API '/place-order' with address data
         // 3. On success, show alert and navigate to home ('/(tabs)')
+
         const { street, city, state, pincode } = address;
 
         if (!street || !city || !state || !pincode) {
-            Alert.alert('Error', 'All fields required');
+            Alert.alert('Error', 'All fields are required');
+            return;
+        }
+
+        if(pincode.length !== 6) {
+            Alert.alert('Error', 'Pincode must be 6 digits');
             return;
         }
 
@@ -41,15 +48,13 @@ export default function Checkout() {
                 body: { address },
             });
 
-            Alert.alert(
-                'Success',
-                `Order placed! ID: ${res.orderId}`
-            );
+            Alert.alert('Success', `Order placed! ID: ${res.orderId}`);
 
             router.replace('/(tabs)');
 
         } catch (err) {
             console.log(err);
+            Alert.alert('Error', 'Failed to place order');
         } finally {
             setLoading(false);
         }
@@ -65,9 +70,7 @@ export default function Checkout() {
             >
                 <ScrollView contentContainerStyle={styles.container}>
 
-                    <Text style={styles.title}>
-                        Shipping Address
-                    </Text>
+                    <Text style={styles.title}>Shipping Address</Text>
 
                     <TextInput
                         placeholder="Street"
@@ -85,18 +88,14 @@ export default function Checkout() {
                         <TextInput
                             placeholder="State"
                             style={[styles.input, styles.half]}
-                            onChangeText={(t) =>
-                                updateField('state', t)
-                            }
+                            onChangeText={(t) => updateField('state', t)}
                         />
 
                         <TextInput
                             placeholder="Pincode"
                             keyboardType="numeric"
                             style={[styles.input, styles.half]}
-                            onChangeText={(t) =>
-                                updateField('pincode', t)
-                            }
+                            onChangeText={(t) => updateField('pincode', t)}
                         />
                     </View>
 
@@ -106,9 +105,7 @@ export default function Checkout() {
                         disabled={loading}
                     >
                         <Text style={{ color: 'white' }}>
-                            {loading
-                                ? 'Placing Order...'
-                                : 'Place Order'}
+                            {loading ? 'Placing Order...' : 'Place Order'}
                         </Text>
                     </TouchableOpacity>
 
@@ -130,6 +127,7 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
+        borderColor: '#ccc',
         borderRadius: 8,
         padding: 12,
         marginBottom: 15,

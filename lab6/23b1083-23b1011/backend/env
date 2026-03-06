@@ -1,0 +1,6 @@
+export PGUSER=jigyasachouhan
+export PGPASSWORD=Password@psql
+export PGHOST=localhost
+export PGPORT=5432
+export PGDATABASE=lab6
+export SESSION_SECRET=your_secret_key

@@ -28,33 +28,20 @@ const CartItem = ({ item, onUpdateQuantity }: CartItemProps) => {
     
     return (
         <View style={styles.card}>
-            <View style={StyleSheet.itemInfo}>
+            <View style={styles.itemInfo}>
                 <Text style={styles.productName}>{item.name}</Text>
-                <Text>{item.price.toFixed(2)}</Text>
+                <Text>₹{Number(item.price).toFixed(2)}</Text>
                 <Text>Stock: {item.stock_quantity}</Text>
             </View>
-            {/* 
-                TODO: Implement the CartItem UI
-                
-                Hints:
-                1. Define and use styles (card, itemInfo, productName, etc.)
-                2. Display product name and price
-                3. Create a quantity control section with '-' and '+' buttons
-                4. Use the onUpdateQuantity prop to handle quantity changes
-                   - Decrease: Math.max(0, item.quantity - 1)
-                   - Increase: item.quantity + 1
-                5. Display the total for this item (price * quantity)
-                   - Use toFixed(2) for formatting
-            */}
-            {/* <Text>Implement CartItem here</Text> */}
+
+            {/* TODO: Implement the CartItem UI */}
+
             <View style={styles.quantityContainer}>
                 <TouchableOpacity style={styles.btn} onPress={decreaseQty}>
                     <Text style={styles.btnText}>-</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.quantity}>
-                    {item.quantity}
-                </Text>
+                <Text style={styles.quantity}>{item.quantity}</Text>
 
                 <TouchableOpacity style={styles.btn} onPress={increaseQty}>
                     <Text style={styles.btnText}>+</Text>
@@ -72,10 +59,10 @@ const CartItem = ({ item, onUpdateQuantity }: CartItemProps) => {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         padding: 15,
         marginVertical: 8,
-        borderRadius: 10,
+        borderRadius: 8,
         elevation: 2,
     },
     itemInfo: {
@@ -88,15 +75,17 @@ const styles = StyleSheet.create({
     quantityContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: 10,
     },
     btn: {
-        backgroundColor: '#ddd',
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 6,
+        backgroundColor: '#e0e0e0',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 4,
     },
     btnText: {
         fontSize: 18,
+        fontWeight: 'bold',
     },
     quantity: {
         marginHorizontal: 15,
@@ -104,7 +93,7 @@ const styles = StyleSheet.create({
     },
     total: {
         marginTop: 10,
-        fontWeight: '600',
+        fontWeight: 'bold',
     },
 });
 

@@ -17,6 +17,13 @@ const pool = new Pool({
   port: process.env.PGPORT,
 });
 
+console.log("Connecting to PostgreSQL with config:", {
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  port: process.env.PGPORT,
+});
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
