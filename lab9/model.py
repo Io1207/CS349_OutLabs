@@ -61,21 +61,40 @@ def update_embeddings():
     """
     # TODO: Implement this function
     # connect to the PostgreSQL database using psycopg2
-    conn = psycopg2.connect(dbname=PGDATABASE, user=PGUSER, password=PGPASSWORD, host=PGHOST)
-    conn.autocommit = True
+    conn = psycopg2.connect(
+        dbname=PGDATABASE,
+        user=PGUSER,
+        password=PGPASSWORD,
+        host=PGHOST
+    )
+    conn.autocommit = False
     cur = conn.cursor()
-    # fetch all rows (you need both 'ctid' and 'overview')
+
     cur.execute("SELECT ctid, overview FROM imdb_staging;")
     rows = cur.fetchall()
-    # for each row, calculate the embedding for the 'overview' column and update the 'embedding' column
-    for ctid, overview in rows:
-        print(f"Processing row with ctid: {ctid}", end="\r")
-        embedding = get_embedding(overview)
-        if embedding:
-            # convert the embedding list to a string format suitable for PostgreSQL vector input
-            vec_str = "[" + ",".join(map(str, embedding)) + "]"
-            cur.execute("UPDATE imdb_staging SET embedding = %s::vector WHERE ctid = %s;", (vec_str, ctid))
 
+    for i, (ctid, overview) in enumerate(rows):
+        if not overview:
+            continue
+
+        print(f"Processing {i}/{len(rows)}", end="\r")
+
+        embedding = get_embedding(overview)
+
+        if embedding:
+            vec_str = "[" + ",".join(map(str, embedding)) + "]"
+
+            cur.execute(
+                "UPDATE imdb_staging SET embedding = %s::vector WHERE ctid = %s;",
+                (vec_str, ctid)
+            )
+
+        if i % 100 == 0:
+            conn.commit()
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def setup_database():
     conn = psycopg2.connect(dbname=PGDATABASE, user=PGUSER, password=PGPASSWORD, host=PGHOST)
